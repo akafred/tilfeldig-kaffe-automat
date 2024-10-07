@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="no">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Tilfeldig kaffe-automat</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: auto;
+                background-color: #f9f9f9;
+                padding: 20px;
+            }
+            h1 {
+                text-align: center;
+            }
+            textarea,
+            input[type="text"] {
+                width: 100%;
+                padding: 10px;
+                margin: 10px 0;
+            }
+            button {
+                display: block;
+                width: 100%;
+                padding: 10px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                cursor: pointer;
+            }
+            button:hover {
+                background-color: #0056b3;
+            }
+            .result {
+                margin-top: 20px;
+                background-color: #e9ecef;
+                padding: 15px;
+                border-radius: 5px;
+            }
+            .alert {
+                color: red;
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Tilfeldig kaffe-automat</h1>
+
+        <p>Hvordan kopiere handles fra Slack:</p>
+        <ol>
+            <li>Åpne Slack og gå til ønsket kanal.</li>
+            <li>
+                Bruk kommandoen <code>/who</code> for å få en liste over alle
+                Slack-handles.
+            </li>
+            <li>Kopier listen og lim den inn i feltet nedenfor.</li>
+        </ol>
+
+        <p>
+            Lim inn listen med Slack-handles hentet fra Slack-kanalen nedenfor:
+        </p>
+        <textarea
+            id="handleList"
+            rows="5"
+            placeholder="@anne, @bjørn, ..."
+        ></textarea>
+
+        <p>Legg til ditt eget Slack-handle (obligatorisk):</p>
+        <input type="text" id="userHandle" placeholder="@ditthandle" />
+
+        <p>Legg til eventuelle handles som skal ekskluderes (ett per linje):</p>
+        <textarea id="excludeHandles" rows="3" placeholder="@robot"></textarea>
+
+        <button onclick="generatePairs()">Generer Tilfeldige Par</button>
+
+        <div id="alert" class="alert" style="display: none"></div>
+        <div id="result" class="result" style="display: none"></div>
+        <button
+            id="copyButton"
+            style="display: none"
+            onclick="copyToClipboard()"
+        >
+            Kopier til Utklippstavle
+        </button>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const userHandleInput = document.getElementById("userHandle");
+                userHandleInput.value =
+                    localStorage.getItem("userHandle") || "";
+
+                const excludeHandlesInput =
+                    document.getElementById("excludeHandles");
+                excludeHandlesInput.value =
+                    localStorage.getItem("excludeHandles") || "";
+
+                runTests();
+            });
+
+            function generatePairs() {
+                let handleList = document.getElementById("handleList").value;
+                handleList = handleList
+                    .replace(/Users here:|\.\.\. and you!/g, "")
+                    .split(",")
+                    .map((e) => e.trim())
+                    .filter((e) => e);
+                const userHandle = document
+                    .getElementById("userHandle")
+                    .value.trim();
+                const excludeHandlesInput =
+                    document.getElementById("excludeHandles").value;
+                const excludeHandles = parseExcludeHandles(excludeHandlesInput);
+                const alertDiv = document.getElementById("alert");
+
+                if (!userHandle) {
+                    alertDiv.innerHTML =
+                        "Vennligst legg til ditt eget Slack-handle.";
+                    alertDiv.style.display = "block";
+                    return;
+                } else {
+                    alertDiv.style.display = "none";
+                }
+
+                localStorage.setItem("userHandle", userHandle);
+                localStorage.setItem("excludeHandles", excludeHandlesInput);
+
+                const slackHandles = filterHandles(
+                    handleList,
+                    userHandle,
+                    excludeHandles,
+                );
+                shuffleArray(slackHandles);
+
+                const pairs = generatePairsFromList(slackHandles);
+
+                let resultText = "";
+                pairs.forEach((pair, index) => {
+                    resultText += `${index + 1}. ${pair.join(" & ")}<br>`;
+                });
+
+                document.getElementById("result").innerHTML = resultText;
+                document.getElementById("result").style.display = "block";
+                document.getElementById("copyButton").style.display = "block";
+            }
+
+            function filterHandles(handleList, userHandle, excludeHandles) {
+                return handleList
+                    .filter(
+                        (handle) =>
+                            !excludeHandles.includes(handle) &&
+                            handle !== userHandle,
+                    )
+                    .concat(userHandle);
+            }
+
+            function generatePairsFromList(list) {
+                const pairs = [];
+                for (let i = 0; i < list.length; i += 2) {
+                    if (i + 3 === list.length) {
+                        pairs.push([list[i], list[i + 1], list[i + 2]]);
+                        break;
+                    } else if (i + 1 < list.length) {
+                        pairs.push([list[i], list[i + 1]]);
+                    }
+                }
+                return pairs;
+            }
+
+            function parseExcludeHandles(input) {
+                return input
+                    .split("\n")
+                    .map((e) => e.trim())
+                    .filter((e) => e);
+            }
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            function copyToClipboard() {
+                const resultDiv = document.getElementById("result");
+                const range = document.createRange();
+                range.selectNode(resultDiv);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+                document.execCommand("copy");
+                window.getSelection().removeAllRanges();
+                const alertDiv = document.getElementById("alert");
+                alertDiv.innerHTML =
+                    "Resultatet er kopiert til utklippstavlen!";
+                alertDiv.style.display = "block";
+            }
+
+            function runTests() {
+                console.log("Running tests...");
+
+                const filterTestCases = [
+                    {
+                        input: {
+                            list: ["@a", "@b", "@c"],
+                            user: "@d",
+                            exclude: ["@b"],
+                        },
+                        expected: ["@a", "@c", "@d"],
+                    },
+                    {
+                        input: {
+                            list: ["@a", "@b", "@c", "@d"],
+                            user: "@e",
+                            exclude: ["@a", "@c"],
+                        },
+                        expected: ["@b", "@d", "@e"],
+                    },
+                ];
+
+                filterTestCases.forEach((testCase, index) => {
+                    const result = filterHandles(
+                        testCase.input.list,
+                        testCase.input.user,
+                        testCase.input.exclude,
+                    );
+                    const passed =
+                        JSON.stringify(result) ===
+                        JSON.stringify(testCase.expected);
+                    if (!passed) {
+                        alert(
+                            `Filter test case ${index + 1} FAILED:\nExpected: ${JSON.stringify(testCase.expected)}\nGot: ${JSON.stringify(result)}`,
+                        );
+                    }
+                });
+
+                const pairTestCases = [
+                    {
+                        input: ["@a", "@b", "@c"],
+                        expected: [["@a", "@b", "@c"]],
+                    },
+                    {
+                        input: ["@a", "@b", "@c", "@d"],
+                        expected: [
+                            ["@a", "@b"],
+                            ["@c", "@d"],
+                        ],
+                    },
+                    {
+                        input: ["@a", "@b", "@c", "@d", "@e"],
+                        expected: [
+                            ["@a", "@b"],
+                            ["@c", "@d", "@e"],
+                        ],
+                    },
+                ];
+
+                pairTestCases.forEach((testCase, index) => {
+                    const result = generatePairsFromList(testCase.input);
+                    const passed =
+                        JSON.stringify(result) ===
+                        JSON.stringify(testCase.expected);
+                    if (!passed) {
+                        alert(
+                            `Pair test case ${index + 1} FAILED:\nExpected: ${JSON.stringify(testCase.expected)}\nGot: ${JSON.stringify(result)}`,
+                        );
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>
