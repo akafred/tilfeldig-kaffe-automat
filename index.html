@@ -4,6 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Tilfeldig kaffe-automat</title>
+        <link rel="icon" type="image/png" sizes="32x32" href="icon.png" />
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -11,53 +12,87 @@
                 margin: auto;
                 background-color: #f9f9f9;
                 padding: 20px;
+                color: #333;
+            }
+            .content-container {
+                display: flex;
+                align-items: flex-start;
+            }
+            .text-content {
+                flex: 2;
+            }
+            .image-content {
+                margin-left: 20px;
+                flex: 1;
+            }
+            .styled-img {
+                max-width: 100%;
+
+                height: auto;
+                border: 2px solid #ccc;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             }
             h1 {
                 text-align: center;
+                color: #472709;
             }
             textarea,
             input[type="text"] {
                 width: 100%;
                 padding: 10px;
                 margin: 10px 0;
-            }
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                }
             button {
                 display: block;
                 width: 100%;
                 padding: 10px;
-                background-color: #007bff;
+                background-color: #c2b293;
                 color: white;
                 border: none;
+                border-radius: 4px;
                 cursor: pointer;
+                font-size: 16px;
             }
             button:hover {
-                background-color: #0056b3;
+                background-color: #48290a;
             }
             .result {
                 margin-top: 20px;
                 background-color: #e9ecef;
                 padding: 15px;
                 border-radius: 5px;
+                border: 1px solid #ccc;
             }
             .alert {
                 color: red;
                 margin-top: 10px;
+                font-weight: bold;
             }
         </style>
     </head>
     <body>
-        <h1>Tilfeldig kaffe-automat</h1>
 
-        <p>Hvordan kopiere handles fra Slack:</p>
-        <ol>
-            <li>Åpne Slack og gå til ønsket kanal.</li>
-            <li>
-                Bruk kommandoen <code>/who</code> for å få en liste over alle
-                Slack-handles.
-            </li>
-            <li>Kopier listen og lim den inn i feltet nedenfor.</li>
-        </ol>
+        <div class="content-container">
+            <div class="text-content">
+                <h1>Tilfeldig kaffe-automat</h1>
 
+                <p>Hvordan kopiere handles fra Slack:</p>
+                <ol>
+                    <li>Åpne Slack og gå til ønsket kanal.</li>
+                    <li>
+                        Bruk kommandoen <code>/who</code> for å få en liste over alle
+                        Slack-handles.
+                    </li>
+                    <li>Kopier listen og lim den inn i feltet nedenfor.</li>
+                </ol>
+            </div>
+            <div class="image-content">
+                <img src="logo.png" alt="Logo with two coffee cups" class="styled-img" />
+            </div>
+        </div>
         <p>
             Lim inn listen med Slack-handles hentet fra Slack-kanalen nedenfor:
         </p>
@@ -73,7 +108,7 @@
         <p>Legg til eventuelle handles som skal ekskluderes (ett per linje):</p>
         <textarea id="excludeHandles" rows="3" placeholder="@robot"></textarea>
 
-        <button onclick="generatePairs()">Generer Tilfeldige Par</button>
+        <button onclick="generatePairs()">Generer tilfeldige par</button>
 
         <div id="alert" class="alert" style="display: none"></div>
         <div id="result" class="result" style="display: none"></div>
@@ -82,7 +117,7 @@
             style="display: none"
             onclick="copyToClipboard()"
         >
-            Kopier til Utklippstavle
+            Kopier til utklippstavle
         </button>
 
         <p>
