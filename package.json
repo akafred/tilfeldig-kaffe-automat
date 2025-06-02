@@ -1,0 +1,16 @@
+{
+  "name": "tilfeldig-kaffe-automat",
+  "version": "1.0.0",
+  "description": "Random coffee pairing app with Slack integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "keywords": ["slack", "coffee", "pairing", "random"],
+  "author": "akafred",
+  "license": "MIT"
+}

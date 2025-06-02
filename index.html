@@ -88,7 +88,7 @@
                     </li>
                     <li>Kopier listen og lim den inn i feltet nedenfor.</li>
                 </ol>
-                (Merk: <code>/who</code> viser kun de første 100 brukerne i kanalen, så er dere flere i kanalen må du få tak i Slack-handles på en annen måte.)
+                (Merk: <code>/who</code> viser kun de første 100 brukerne i kanalen, så er dere flere i kanalen må du få tak i Slack-handles <a href="api.html">på en annen måte</a>.)
             </div>
             <div class="image-content">
                 <img src="logo.png" alt="Logo with two coffee cups" class="styled-img" />
@@ -135,6 +135,12 @@
                     document.getElementById("excludeHandles");
                 excludeHandlesInput.value =
                     localStorage.getItem("excludeHandles") || "";
+
+                const apiMemberList = localStorage.getItem("apiMemberList");
+                if (apiMemberList) {
+                    document.getElementById("handleList").value = apiMemberList;
+                    localStorage.removeItem("apiMemberList");
+                }
 
                 runTests();
             });
