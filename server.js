@@ -2,11 +2,7 @@ const express = require('express');
 const https = require('https');
 const path = require('path');
 
-const app = express();
 const PORT = 3000;
-
-app.use(express.static('.'));
-app.use(express.json());
 
 function slackApiCall(endpoint, token, params = {}) {
     return new Promise((resolve, reject) => {
@@ -35,68 +31,96 @@ function slackApiCall(endpoint, token, params = {}) {
     });
 }
 
-app.post('/api/slack/channel-members', async (req, res) => {
-    try {
-        const { token, channelId } = req.body;
-        
-        if (!token || !channelId) {
-            return res.status(400).json({ error: 'Token and channelId are required' });
-        }
-
-        const actualChannelId = channelId;
-
-        let allMembers = [];
-        let cursor = '';
-        
-        do {
-            const params = { channel: actualChannelId, limit: 1000 };
-            if (cursor) params.cursor = cursor;
+function createChannelMembersHandler(apiCallFn = slackApiCall) {
+    return async function channelMembersHandler(req, res) {
+        try {
+            const body = req.body || {};
+            const { token, channelId } = body;
             
-            const data = await slackApiCall('conversations.members', token, params);
-            
-            if (!data.ok) {
-                return res.status(400).json({ error: data.error });
+            if (!token || !channelId) {
+                return res.status(400).json({ error: 'Token and channelId are required' });
             }
+
+            const actualChannelId = channelId;
+
+            let allMembers = [];
+            let cursor = '';
             
-            allMembers = allMembers.concat(data.members);
-            cursor = data.response_metadata?.next_cursor || '';
-        } while (cursor);
-
-        const users = [];
-        for (const userId of allMembers) {
-            try {
-                const userData = await slackApiCall('users.info', token, { user: userId });
-                if (userData.ok) {
-                    users.push(userData.user);
-                }
-            } catch (error) {
-                console.warn(`Could not fetch user ${userId}:`, error.message);
-            }
-        }
-
-        const memberHandles = users
-            .filter(user => !user.deleted && !user.is_bot)
-            .map(user => {
-                // Try display_name first, then real_name, then fall back to name
-                const displayName = user.profile?.display_name;
-                const realName = user.profile?.real_name;
-                const username = user.name;
+            do {
+                const params = { channel: actualChannelId, limit: 1000 };
+                if (cursor) params.cursor = cursor;
                 
-                // Use display_name if available and not empty, otherwise real_name, otherwise username
-                const handle = (displayName && displayName.trim()) || realName || username;
-                return `@${handle}`;
-            })
-            .sort();
+                const data = await apiCallFn('conversations.members', token, params);
+                
+                if (!data.ok) {
+                    return res.status(400).json({ error: data.error });
+                }
+                
+                allMembers = allMembers.concat(data.members);
+                cursor = data.response_metadata?.next_cursor || '';
+            } while (cursor);
 
-        res.json({ members: memberHandles });
-        
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
+            const users = [];
+            for (const userId of allMembers) {
+                try {
+                    const userData = await apiCallFn('users.info', token, { user: userId });
+                    if (userData.ok) {
+                        users.push(userData.user);
+                    }
+                } catch (error) {
+                    console.warn(`Could not fetch user ${userId}:`, error.message);
+                }
+            }
 
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-    console.log('Open http://localhost:3000 in your browser');
-});
+            const memberHandles = users
+                .filter(user => !user.deleted && !user.is_bot)
+                .map(user => {
+                    // Try display_name first, then real_name, then fall back to name
+                    const displayName = user.profile?.display_name;
+                    const realName = user.profile?.real_name;
+                    const username = user.name;
+                    
+                    // Use display_name if available and not empty, otherwise real_name, otherwise username
+                    const handle = (displayName && displayName.trim()) || realName || username;
+                    return `@${handle}`;
+                })
+                .sort();
+
+            res.json({ members: memberHandles });
+            
+        } catch (error) {
+            console.error('Error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    };
+}
+
+const channelMembersHandler = createChannelMembersHandler();
+
+// Create app function to support testing
+function createApp() {
+    const app = express();
+    app.use(express.static('.'));
+    app.use(express.json());
+    
+    // Add the channel members route
+    app.post('/api/slack/channel-members', channelMembersHandler);
+    
+    return app;
+}
+
+const app = createApp();
+
+// Only start server and run tests when this file is run directly
+if (require.main === module) {
+    const { runTests } = require('./server.test.js');
+    runTests(createApp(), channelMembersHandler, createChannelMembersHandler);
+    
+    app.listen(PORT, () => {
+        console.log(`Server running at http://localhost:${PORT}`);
+        console.log('Open http://localhost:3000 in your browser');
+    });
+}
+
+// Export for testing
+module.exports = { createApp, channelMembersHandler, createChannelMembersHandler, slackApiCall };
