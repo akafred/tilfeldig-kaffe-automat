@@ -100,18 +100,20 @@ function shuffleArray(array) {
     }
 }
 
-function copyToClipboard() {
+async function copyToClipboard() {
     const resultDiv = document.getElementById("result");
-    const range = document.createRange();
-    range.selectNode(resultDiv);
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(range);
-    document.execCommand("copy");
-    window.getSelection().removeAllRanges();
     const alertDiv = document.getElementById("alert");
-    alertDiv.innerHTML =
-        "Resultatet er kopiert til utklippstavlen!";
-    alertDiv.style.display = "block";
+    
+    try {
+        await navigator.clipboard.writeText(resultDiv.textContent);
+        alertDiv.innerHTML =
+            "Resultatet er kopiert til utklippstavlen!";
+        alertDiv.style.display = "block";
+    } catch (err) {
+        alertDiv.innerHTML =
+            "Kunne ikke kopiere til utklippstavlen.";
+        alertDiv.style.display = "block";
+    }
 }
 
 function runTests() {

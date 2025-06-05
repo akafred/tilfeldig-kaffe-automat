@@ -76,11 +76,15 @@ function showSuccess(message) {
     successDiv.style.display = "block";
 }
 
-function copyMembersToClipboard() {
+async function copyMembersToClipboard() {
     const memberList = document.getElementById("memberList");
-    memberList.select();
-    document.execCommand("copy");
-    showSuccess("Medlemsliste kopiert til utklippstavle!");
+    
+    try {
+        await navigator.clipboard.writeText(memberList.value);
+        showSuccess("Medlemsliste kopiert til utklippstavle!");
+    } catch (err) {
+        showAlert("Kunne ikke kopiere til utklippstavlen.");
+    }
 }
 
 function goToMainPageWithMembers() {
