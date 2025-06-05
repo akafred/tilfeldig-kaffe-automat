@@ -36,7 +36,8 @@ async function fetchChannelMembers() {
             body: JSON.stringify({
                 token: token,
                 channelId: channelInput
-            })
+            }),
+            signal: AbortSignal.timeout(30000)
         });
         
         const data = await response.json();
@@ -52,8 +53,14 @@ async function fetchChannelMembers() {
         showSuccess(`Hentet ${data.members.length} medlemmer fra kanalen.`);
         
     } catch (error) {
-        if (error.message.includes('fetch')) {
+        if (error.name === 'TimeoutError') {
+            showAlert("Forespørselen tok for lang tid. Prøv igjen eller sjekk nettverksforbindelsen.");
+        } else if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
             showAlert("Kan ikke koble til lokal server. Sørg for at du har kjørt 'npm start' og gå til http://localhost:3000/api.html");
+        } else if (error.message.includes('invalid_auth')) {
+            showAlert("Ugyldig Slack token. Sjekk at tokenet er riktig og har tilgang til kanalen.");
+        } else if (error.message.includes('channel_not_found')) {
+            showAlert("Fant ikke kanalen. Sjekk at kanal-ID eller navn er riktig.");
         } else {
             showAlert(`Feil: ${error.message}`);
         }
