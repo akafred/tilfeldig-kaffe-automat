@@ -1,7 +1,5 @@
-// Simple test framework using standard JavaScript
 const assert = require('assert');
 
-// Mock data for comprehensive testing
 const mockSlackUsers = [
     {
         id: 'U123',
@@ -55,17 +53,16 @@ const mockSlackUsers = [
     }
 ];
 
-// Test suite
-function runTests(app, channelMembersHandler, createChannelMembersHandler) {
+async function runTests(app, channelMembersHandler, createChannelMembersHandler) {
     console.log('Running server tests...');
     
     let testsPassed = 0;
     let testsTotal = 0;
     
-    function test(description, testFn) {
+    async function test(description, testFn) {
         testsTotal++;
         try {
-            testFn();
+            await testFn();
             console.log(`✓ ${description}`);
             testsPassed++;
         } catch (error) {
@@ -73,8 +70,7 @@ function runTests(app, channelMembersHandler, createChannelMembersHandler) {
         }
     }
     
-    // Test endpoint validation
-    test('Should return 400 for missing token', async () => {
+    await test('Should return 400 for missing token', async () => {
         const req = { body: { channelId: 'C123' } };
         const res = createMockResponse();
         
@@ -84,7 +80,7 @@ function runTests(app, channelMembersHandler, createChannelMembersHandler) {
         assert.strictEqual(res.jsonData.error, 'Token and channelId are required');
     });
     
-    test('Should return 400 for missing channelId', async () => {
+    await test('Should return 400 for missing channelId', async () => {
         const req = { body: { token: 'xoxb-test' } };
         const res = createMockResponse();
         
@@ -94,7 +90,7 @@ function runTests(app, channelMembersHandler, createChannelMembersHandler) {
         assert.strictEqual(res.jsonData.error, 'Token and channelId are required');
     });
     
-    test('Should return 400 for empty request body', async () => {
+    await test('Should return 400 for empty request body', async () => {
         const req = { body: {} };
         const res = createMockResponse();
         
@@ -104,7 +100,7 @@ function runTests(app, channelMembersHandler, createChannelMembersHandler) {
         assert.strictEqual(res.jsonData.error, 'Token and channelId are required');
     });
     
-    test('Should return 400 for missing request body', async () => {
+    await test('Should return 400 for missing request body', async () => {
         const req = {};
         const res = createMockResponse();
         
@@ -114,7 +110,7 @@ function runTests(app, channelMembersHandler, createChannelMembersHandler) {
         assert.strictEqual(res.jsonData.error, 'Token and channelId are required');
     });
     
-    test('App should have the correct route configured', () => {
+    await test('App should have the correct route configured', () => {
         const routes = [];
         app._router.stack.forEach(layer => {
             if (layer.route) {
@@ -127,8 +123,7 @@ function runTests(app, channelMembersHandler, createChannelMembersHandler) {
                `Expected route 'POST /api/slack/channel-members' not found. Found: ${routes.join(', ')}`);
     });
     
-    // Test core business logic with mocked API
-    test('Should filter out bots and deleted users', async () => {
+    await test('Should filter out bots and deleted users', async () => {
         const mockApiCall = (endpoint, token, params) => {
             if (endpoint === 'conversations.members') {
                 return Promise.resolve({
@@ -160,7 +155,7 @@ function runTests(app, channelMembersHandler, createChannelMembersHandler) {
         assert(!members.some(m => m.includes('Deleted User')));
     });
     
-    test('Should prioritize display_name over real_name over username', async () => {
+    await test('Should prioritize display_name over real_name over username', async () => {
         const mockApiCall = (endpoint, token, params) => {
             if (endpoint === 'conversations.members') {
                 return Promise.resolve({
@@ -192,7 +187,7 @@ function runTests(app, channelMembersHandler, createChannelMembersHandler) {
         assert(members.includes('@username.only'));
     });
     
-    test('Should handle Slack API errors gracefully', async () => {
+    await test('Should handle Slack API errors gracefully', async () => {
         const mockApiCall = (endpoint, token, params) => {
             if (endpoint === 'conversations.members') {
                 return Promise.resolve({
@@ -212,7 +207,7 @@ function runTests(app, channelMembersHandler, createChannelMembersHandler) {
         assert.strictEqual(res.jsonData.error, 'channel_not_found');
     });
     
-    test('Should handle pagination correctly', async () => {
+    await test('Should handle pagination correctly', async () => {
         let callCount = 0;
         const mockApiCall = (endpoint, token, params) => {
             if (endpoint === 'conversations.members') {
@@ -256,10 +251,9 @@ function runTests(app, channelMembersHandler, createChannelMembersHandler) {
     
     if (testsPassed === testsTotal) {
         console.log('All tests passed! ✓');
-        return true;
     } else {
         console.log('Some tests failed! ✗');
-        return false;
+        throw new Error(`${testsTotal - testsPassed} test(s) failed`);
     }
 }
 
@@ -285,7 +279,7 @@ if (require.main === module) {
     const { createApp, channelMembersHandler, createChannelMembersHandler } = require('./server.js');
     console.log('Running tests standalone...');
     const testApp = createApp();
-    runTests(testApp, channelMembersHandler, createChannelMembersHandler);
+    runTests(testApp, channelMembersHandler, createChannelMembersHandler).catch(console.error);
 }
 
 module.exports = { runTests };

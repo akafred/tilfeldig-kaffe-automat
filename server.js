@@ -114,12 +114,15 @@ const app = createApp();
 // Only start server and run tests when this file is run directly
 if (require.main === module) {
     const { runTests } = require('./server.test.js');
-    runTests(createApp(), channelMembersHandler, createChannelMembersHandler);
     
-    app.listen(PORT, () => {
-        console.log(`Server running at http://localhost:${PORT}`);
-        console.log('Open http://localhost:3000 in your browser');
-    });
+    runTests(createApp(), channelMembersHandler, createChannelMembersHandler)
+        .then(() => {
+            app.listen(PORT, () => {
+                console.log(`Server running at http://localhost:${PORT}`);
+                console.log('Open http://localhost:3000 in your browser');
+            });
+        })
+        .catch(console.error);
 }
 
 // Export for testing
