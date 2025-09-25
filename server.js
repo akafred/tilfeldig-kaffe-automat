@@ -2,7 +2,7 @@ const express = require('express');
 const https = require('https');
 const path = require('path');
 
-const PORT = 3000;
+const PORT = process.argv[2] || 3000;
 
 function slackApiCall(endpoint, token, params = {}) {
     return new Promise((resolve, reject) => {
@@ -120,7 +120,7 @@ if (require.main === module) {
         .then(() => {
             app.listen(PORT, () => {
                 console.log(`Server running at http://localhost:${PORT}`);
-                console.log('Open http://localhost:3000 in your browser');
+                console.log(`Open http://localhost:${PORT} in your browser`);
             });
         })
         .catch(console.error);
