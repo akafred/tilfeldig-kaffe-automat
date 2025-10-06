@@ -116,6 +116,105 @@ async function copyToClipboard() {
     }
 }
 
+function generateCompleteSchedule() {
+    let handleList = document.getElementById("handleList").value;
+    handleList = handleList
+        .replace(/Users here:|\.\.\. and you!/g, "")
+        .split(",")
+        .map((e) => e.trim())
+        .filter((e) => e);
+    const userHandle = document
+        .getElementById("userHandle")
+        .value.trim();
+    const excludeHandlesInput =
+        document.getElementById("excludeHandles").value;
+    const excludeHandles = parseExcludeHandles(excludeHandlesInput);
+    const alertDiv = document.getElementById("alert");
+
+    if (!userHandle) {
+        alertDiv.innerHTML =
+            "Vennligst legg til ditt eget Slack-handle.";
+        alertDiv.style.display = "block";
+        return;
+    } else {
+        alertDiv.style.display = "none";
+    }
+
+    localStorage.setItem("userHandle", userHandle);
+    localStorage.setItem("excludeHandles", excludeHandlesInput);
+
+    const slackHandles = filterHandles(
+        handleList,
+        userHandle,
+        excludeHandles,
+    );
+
+    const schedule = generateRoundRobinSchedule(slackHandles);
+
+    let resultText = "";
+    schedule.rounds.forEach((round, index) => {
+        resultText += `<strong>Runde ${index + 1}:</strong><br>`;
+        round.forEach((pair, pairIndex) => {
+            resultText += `${pairIndex + 1}. ${pair.join(" & ")}<br>`;
+        });
+        if (schedule.skipped[index]) {
+            resultText += `<em>Står over: ${schedule.skipped[index]}</em><br>`;
+        }
+        resultText += "<br>";
+    });
+
+    document.getElementById("result").innerHTML = resultText;
+    document.getElementById("result").style.display = "block";
+    document.getElementById("copyButton").style.display = "block";
+}
+
+function generateRoundRobinSchedule(participants) {
+    const n = participants.length;
+    if (n < 2) return { rounds: [], skipped: [] };
+
+    let players = [...participants];
+    const hasOddNumber = n % 2 === 1;
+
+    if (hasOddNumber) {
+        players.push("BYE");
+    }
+
+    const rounds = [];
+    const skipped = [];
+    const numRounds = players.length - 1;
+
+    for (let round = 0; round < numRounds; round++) {
+        const pairs = [];
+        let skippedPlayer = null;
+
+        for (let i = 0; i < players.length / 2; i++) {
+            const player1 = players[i];
+            const player2 = players[players.length - 1 - i];
+
+            if (player1 === "BYE") {
+                skippedPlayer = player2;
+            } else if (player2 === "BYE") {
+                skippedPlayer = player1;
+            } else {
+                pairs.push([player1, player2]);
+            }
+        }
+
+        if (pairs.length > 0) {
+            rounds.push(pairs);
+            skipped.push(skippedPlayer);
+        }
+
+        const fixed = players[0];
+        const rotating = players.slice(1);
+        const last = rotating.pop();
+        rotating.unshift(last);
+        players = [fixed, ...rotating];
+    }
+
+    return { rounds, skipped };
+}
+
 function runTests() {
     console.log("Running tests...");
 
@@ -183,6 +282,35 @@ function runTests() {
         if (!passed) {
             alert(
                 `Pair test case ${index + 1} FAILED:\nExpected: ${JSON.stringify(testCase.expected)}\nGot: ${JSON.stringify(result)}`,
+            );
+        }
+    });
+
+    const roundRobinTestCases = [
+        {
+            input: ["@a", "@b", "@c", "@d"],
+            expectedRounds: 3,
+            expectedTotalPairs: 6
+        },
+        {
+            input: ["@a", "@b", "@c"],
+            expectedRounds: 3,
+            expectedTotalPairs: 3
+        },
+        {
+            input: ["@a", "@b", "@c", "@d", "@e"],
+            expectedRounds: 5,
+            expectedTotalPairs: 10
+        }
+    ];
+
+    roundRobinTestCases.forEach((testCase, index) => {
+        const schedule = generateRoundRobinSchedule(testCase.input);
+        const totalPairs = schedule.rounds.reduce((sum, round) => sum + round.length, 0);
+
+        if (schedule.rounds.length !== testCase.expectedRounds || totalPairs !== testCase.expectedTotalPairs) {
+            alert(
+                `Round robin test case ${index + 1} FAILED:\nExpected ${testCase.expectedRounds} rounds with ${testCase.expectedTotalPairs} total pairs\nGot ${schedule.rounds.length} rounds with ${totalPairs} total pairs`
             );
         }
     });
