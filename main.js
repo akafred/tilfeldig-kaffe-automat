@@ -105,7 +105,7 @@ async function copyToClipboard() {
     const alertDiv = document.getElementById("alert");
     
     try {
-        await navigator.clipboard.writeText(resultDiv.textContent);
+        await navigator.clipboard.writeText(resultDiv.innerText);
         alertDiv.innerHTML =
             "Resultatet er kopiert til utklippstavlen!";
         alertDiv.style.display = "block";
