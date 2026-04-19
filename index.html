@@ -48,6 +48,12 @@
 
         <p><small><em>Litt mindre tilfeldig kaffe genererer en komplett plan hvor alle møter alle nøyaktig én gang. Dette gir ca. like mange kaffe-runder som antall personer i gruppa, så det egner seg best for mindre grupper.</em></small></p>
 
+        <details>
+            <summary><small>Revidere en eksisterende plan?</small></summary>
+            <p><small>Lim inn allerede gjennomførte paringer (én per linje, f.eks. <code>@alice & @bob</code>). Deltakerlisten ovenfor er hvem som er med <em>nå</em> — nye folk får paringer med alle, folk som har sluttet droppes automatisk.</small></p>
+            <textarea id="completedPairings" rows="4" placeholder="@alice & @bob&#10;@charlie & @dave"></textarea>
+        </details>
+
         <div id="alert" class="alert" style="display: none"></div>
         <div id="result" class="result" style="display: none"></div>
         <button

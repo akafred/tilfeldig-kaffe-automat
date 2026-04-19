@@ -107,3 +107,47 @@ button:hover {
 .back-link a:hover {
     text-decoration: underline;
 }
+
+.pairing-matrix {
+    border-collapse: collapse;
+    font-size: 12px;
+    margin: 10px 0;
+}
+
+.pairing-matrix th,
+.pairing-matrix td {
+    border: 1px solid #ccc;
+    padding: 3px 5px;
+    text-align: center;
+    min-width: 28px;
+}
+
+.pairing-matrix th {
+    background-color: #e9ecef;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.pair-done {
+    background-color: #c2b293;
+    color: #472709;
+    font-weight: bold;
+}
+
+.pair-planned {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.pair-none {
+    color: #ccc;
+}
+
+.pair-inactive {
+    color: #999;
+    font-style: italic;
+}
+
+.pair-diag {
+    background-color: #e0e0e0;
+}
