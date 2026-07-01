@@ -41,13 +41,11 @@ function createChannelMembersHandler(apiCallFn = slackApiCall) {
                 return res.status(400).json({ error: 'Token and channelId are required' });
             }
 
-            const actualChannelId = channelId;
-
             let allMembers = [];
             let cursor = '';
             
             do {
-                const params = { channel: actualChannelId, limit: 1000 };
+                const params = { channel: channelId, limit: 1000 };
                 if (cursor) params.cursor = cursor;
                 
                 const data = await apiCallFn('conversations.members', token, params);
