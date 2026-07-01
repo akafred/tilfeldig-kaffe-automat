@@ -306,53 +306,6 @@ function generateScheduleFromRemainingPairings(participants, completedPairings) 
     return { rounds, skipped };
 }
 
-function generateRoundRobinSchedule(participants) {
-    const n = participants.length;
-    if (n < 2) return { rounds: [], skipped: [] };
-
-    let players = [...participants];
-    const hasOddNumber = n % 2 === 1;
-
-    if (hasOddNumber) {
-        players.push("BYE");
-    }
-
-    const rounds = [];
-    const skipped = [];
-    const numRounds = players.length - 1;
-
-    for (let round = 0; round < numRounds; round++) {
-        const pairs = [];
-        let skippedPlayer = null;
-
-        for (let i = 0; i < players.length / 2; i++) {
-            const player1 = players[i];
-            const player2 = players[players.length - 1 - i];
-
-            if (player1 === "BYE") {
-                skippedPlayer = player2;
-            } else if (player2 === "BYE") {
-                skippedPlayer = player1;
-            } else {
-                pairs.push([player1, player2]);
-            }
-        }
-
-        if (pairs.length > 0) {
-            rounds.push(pairs);
-            skipped.push(skippedPlayer);
-        }
-
-        const fixed = players[0];
-        const rotating = players.slice(1);
-        const last = rotating.pop();
-        rotating.unshift(last);
-        players = [fixed, ...rotating];
-    }
-
-    return { rounds, skipped };
-}
-
 function runTests() {
     console.log("Running tests...");
 
@@ -420,35 +373,6 @@ function runTests() {
         if (!passed) {
             alert(
                 `Pair test case ${index + 1} FAILED:\nExpected: ${JSON.stringify(testCase.expected)}\nGot: ${JSON.stringify(result)}`,
-            );
-        }
-    });
-
-    const roundRobinTestCases = [
-        {
-            input: ["@a", "@b", "@c", "@d"],
-            expectedRounds: 3,
-            expectedTotalPairs: 6
-        },
-        {
-            input: ["@a", "@b", "@c"],
-            expectedRounds: 3,
-            expectedTotalPairs: 3
-        },
-        {
-            input: ["@a", "@b", "@c", "@d", "@e"],
-            expectedRounds: 5,
-            expectedTotalPairs: 10
-        }
-    ];
-
-    roundRobinTestCases.forEach((testCase, index) => {
-        const schedule = generateRoundRobinSchedule(testCase.input);
-        const totalPairs = schedule.rounds.reduce((sum, round) => sum + round.length, 0);
-
-        if (schedule.rounds.length !== testCase.expectedRounds || totalPairs !== testCase.expectedTotalPairs) {
-            alert(
-                `Round robin test case ${index + 1} FAILED:\nExpected ${testCase.expectedRounds} rounds with ${testCase.expectedTotalPairs} total pairs\nGot ${schedule.rounds.length} rounds with ${totalPairs} total pairs`
             );
         }
     });
