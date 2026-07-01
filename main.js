@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     runTests();
 });
 
-function generatePairs() {
+function readAndValidateInputs() {
     let handleList = document.getElementById("handleList").value;
     handleList = handleList
         .replace(/Users here:|\.\.\. and you!/g, "")
@@ -36,7 +36,7 @@ function generatePairs() {
         alertDiv.innerHTML =
             "Vennligst legg til ditt eget Slack-handle.";
         alertDiv.style.display = "block";
-        return;
+        return null;
     } else {
         alertDiv.style.display = "none";
     }
@@ -49,6 +49,15 @@ function generatePairs() {
         userHandle,
         excludeHandles,
     );
+
+    return { slackHandles, alertDiv };
+}
+
+function generatePairs() {
+    const inputs = readAndValidateInputs();
+    if (!inputs) return;
+
+    const { slackHandles } = inputs;
     shuffleArray(slackHandles);
 
     const pairs = generatePairsFromList(slackHandles);
@@ -117,37 +126,10 @@ async function copyToClipboard() {
 }
 
 function generateCompleteSchedule() {
-    let handleList = document.getElementById("handleList").value;
-    handleList = handleList
-        .replace(/Users here:|\.\.\. and you!/g, "")
-        .split(",")
-        .map((e) => e.trim())
-        .filter((e) => e);
-    const userHandle = document
-        .getElementById("userHandle")
-        .value.trim();
-    const excludeHandlesInput =
-        document.getElementById("excludeHandles").value;
-    const excludeHandles = parseExcludeHandles(excludeHandlesInput);
-    const alertDiv = document.getElementById("alert");
+    const inputs = readAndValidateInputs();
+    if (!inputs) return;
 
-    if (!userHandle) {
-        alertDiv.innerHTML =
-            "Vennligst legg til ditt eget Slack-handle.";
-        alertDiv.style.display = "block";
-        return;
-    } else {
-        alertDiv.style.display = "none";
-    }
-
-    localStorage.setItem("userHandle", userHandle);
-    localStorage.setItem("excludeHandles", excludeHandlesInput);
-
-    const slackHandles = filterHandles(
-        handleList,
-        userHandle,
-        excludeHandles,
-    );
+    const { slackHandles } = inputs;
 
     const completedInput = document.getElementById("completedPairings");
     const completedPairings = completedInput
