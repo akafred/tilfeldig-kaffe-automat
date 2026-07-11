@@ -246,6 +246,99 @@ async function runTests(app, channelMembersHandler, createChannelMembersHandler)
         assert(members.includes('@Jane Smith'));
         assert(members.includes('@username.only'));
     });
+
+    await test('Should limit concurrent user lookups', async () => {
+        const userIds = Array.from({ length: 12 }, (_, index) => `U${index}`);
+        let activeLookups = 0;
+        let maxActiveLookups = 0;
+        const mockApiCall = (endpoint, token, params) => {
+            if (endpoint === 'conversations.members') {
+                return Promise.resolve({ ok: true, members: userIds, response_metadata: {} });
+            }
+            activeLookups++;
+            maxActiveLookups = Math.max(maxActiveLookups, activeLookups);
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    activeLookups--;
+                    resolve({
+                        ok: true,
+                        user: {
+                            id: params.user,
+                            name: params.user,
+                            deleted: false,
+                            is_bot: false,
+                            profile: { display_name: params.user, real_name: params.user }
+                        }
+                    });
+                }, 5);
+            });
+        };
+
+        const testHandler = createChannelMembersHandler(mockApiCall);
+        const res = createMockResponse();
+        await testHandler({ body: { token: 'xoxb-test', channelId: 'C123' } }, res);
+
+        assert.strictEqual(res.statusCode, 200);
+        assert.strictEqual(res.jsonData.members.length, userIds.length);
+        assert(maxActiveLookups <= 5);
+    });
+
+    await test('Should not return a partial list when a user lookup fails', async () => {
+        const mockApiCall = (endpoint, token, params) => {
+            if (endpoint === 'conversations.members') {
+                return Promise.resolve({
+                    ok: true,
+                    members: ['U123', 'U124'],
+                    response_metadata: {}
+                });
+            }
+            if (params.user === 'U124') {
+                return Promise.resolve({ ok: false, error: 'user_not_found' });
+            }
+            return Promise.resolve({ ok: true, user: mockSlackUsers[0] });
+        };
+
+        const testHandler = createChannelMembersHandler(mockApiCall);
+        const res = createMockResponse();
+        await testHandler({ body: { token: 'xoxb-test', channelId: 'C123' } }, res);
+
+        assert.strictEqual(res.statusCode, 502);
+        assert.match(res.jsonData.error, /users\.info failed/);
+        assert.strictEqual(res.jsonData.members, undefined);
+    });
+
+    await test('Should retry rate-limited Slack calls', async () => {
+        let memberCalls = 0;
+        const retryDelays = [];
+        const mockApiCall = (endpoint, token, params) => {
+            if (endpoint === 'conversations.members') {
+                memberCalls++;
+                if (memberCalls === 1) {
+                    return Promise.resolve({
+                        ok: false,
+                        error: 'ratelimited',
+                        retryAfter: 0
+                    });
+                }
+                return Promise.resolve({
+                    ok: true,
+                    members: ['U123'],
+                    response_metadata: {}
+                });
+            }
+            return Promise.resolve({ ok: true, user: mockSlackUsers[0] });
+        };
+
+        const testHandler = createChannelMembersHandler(mockApiCall, {
+            sleepFn: async delay => retryDelays.push(delay)
+        });
+        const res = createMockResponse();
+        await testHandler({ body: { token: 'xoxb-test', channelId: 'C123' } }, res);
+
+        assert.strictEqual(res.statusCode, 200);
+        assert.strictEqual(memberCalls, 2);
+        assert.deepStrictEqual(retryDelays, [0]);
+    });
     
     console.log(`\nTest Results: ${testsPassed}/${testsTotal} tests passed`);
     
