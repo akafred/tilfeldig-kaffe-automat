@@ -184,7 +184,13 @@ function renderPairingMatrix(participants, completedPairings, plannedRounds) {
 
     let html = '<h3>Paringsmatrise</h3>';
     html += '<div style="overflow-x:auto">';
-    html += '<table class="pairing-matrix"><tbody>';
+    html += '<table class="pairing-matrix"><thead><tr><th></th>';
+    sorted.forEach((person) => {
+        const label = person.replace("@", "");
+        const columnClass = activeSet.has(person) ? '' : ' class="pair-inactive"';
+        html += `<th${columnClass}>${label}</th>`;
+    });
+    html += '</tr></thead><tbody>';
 
     for (let i = 0; i < n; i++) {
         const rowLabel = sorted[i].replace("@", "");
@@ -287,5 +293,4 @@ function generateScheduleFromRemainingPairings(participants, completedPairings) 
 
     return { rounds, skipped };
 }
-
 

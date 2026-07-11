@@ -183,5 +183,18 @@ function runTests() {
         alert("parseExcludeHandles test 3 FAILED: mixed separators");
     }
 
+    const matrix = renderPairingMatrix(
+        ["@b", "@a"],
+        new Set(),
+        { "@a & @b": 1 },
+    );
+    if (
+        !matrix.includes("<thead><tr><th></th><th>a</th><th>b</th>") ||
+        !matrix.includes("<th>a</th>") ||
+        !matrix.includes("<th>b</th>")
+    ) {
+        alert("Pairing matrix test FAILED: missing column headers");
+    }
+
     console.log("Running tests... done.");
 }
