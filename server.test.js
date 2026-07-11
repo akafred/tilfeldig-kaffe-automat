@@ -112,7 +112,8 @@ async function runTests(app, channelMembersHandler, createChannelMembersHandler)
     
     await test('App should have the correct route configured', () => {
         const routes = [];
-        app._router.stack.forEach(layer => {
+        const router = app._router || app.router;
+        router.stack.forEach(layer => {
             if (layer.route) {
                 const methods = Object.keys(layer.route.methods);
                 routes.push(`${methods[0].toUpperCase()} ${layer.route.path}`);
