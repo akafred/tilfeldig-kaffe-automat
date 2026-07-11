@@ -182,8 +182,12 @@ function createChannelMembersHandler(apiCallFn = slackApiCall, options = {}) {
             res.json({ members: memberHandles });
             
         } catch (error) {
-            console.error('Error:', error);
             const statusCode = error.statusCode >= 400 ? error.statusCode : 500;
+            if (statusCode >= 500 && statusCode !== 502) {
+                console.error('Error:', error);
+            } else {
+                console.warn('Slack API error:', error.message);
+            }
             res.status(statusCode).json({ error: error.message });
         }
     };
