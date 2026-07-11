@@ -13,7 +13,7 @@ install:
 	npm install
 
 start: stop
-	npm start & echo $$! > $(PID_FILE)
+	node server.js & echo $$! > $(PID_FILE)
 	@sleep 2
 	@if kill -0 $$(cat $(PID_FILE)) 2>/dev/null; then \
 		echo "Server started (PID: $$(cat $(PID_FILE)))"; \
@@ -42,4 +42,3 @@ status: ## status
 		echo "Server not running"; \
 		rm -f $(PID_FILE) 2>/dev/null || true; \
 	fi
-
