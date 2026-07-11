@@ -279,7 +279,10 @@ if (require.main === module) {
     const { createApp, channelMembersHandler, createChannelMembersHandler } = require('./server.js');
     console.log('Running tests standalone...');
     const testApp = createApp();
-    runTests(testApp, channelMembersHandler, createChannelMembersHandler).catch(console.error);
+    runTests(testApp, channelMembersHandler, createChannelMembersHandler).catch((error) => {
+        console.error(error);
+        process.exitCode = 1;
+    });
 }
 
 module.exports = { runTests };

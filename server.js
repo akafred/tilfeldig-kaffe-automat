@@ -121,7 +121,10 @@ if (require.main === module) {
                 console.log(`Open http://localhost:${PORT} in your browser`);
             });
         })
-        .catch(console.error);
+        .catch((error) => {
+            console.error(error);
+            process.exitCode = 1;
+        });
 }
 
 // Export for testing
