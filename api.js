@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const tokenInput = document.getElementById("apiToken");
     const channelInput = document.getElementById("channelId");
     
-    tokenInput.value = localStorage.getItem("slackToken") || "";
+    localStorage.removeItem("slackToken");
     channelInput.value = localStorage.getItem("channelId") || "";
 });
 
@@ -24,7 +24,6 @@ async function fetchChannelMembers() {
     fetchButton.disabled = true;
     fetchButton.textContent = "Henter medlemmer...";
     
-    localStorage.setItem("slackToken", token);
     localStorage.setItem("channelId", channelInput);
     
     try {
